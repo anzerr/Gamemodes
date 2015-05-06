@@ -1,0 +1,6 @@
+"VertexLitGeneric"
+{
+	"$baseTexture" "mine\seedboxes/Test"
+	"$model" "1"
+	"$bumpmap" "mine\seedboxes\Test-NORMBump"
+}

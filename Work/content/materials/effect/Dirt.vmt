@@ -1,0 +1,6 @@
+"UnlitGeneric"
+{
+	"$basetexture" "effect/Dirt"
+	"$vertexalpha" 1
+	"$vertexcolor" 1
+}

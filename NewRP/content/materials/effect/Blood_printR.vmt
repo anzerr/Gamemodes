@@ -1,0 +1,7 @@
+"DecalModulate"
+{
+	"$translucent" 1
+	"$basetexture" "effect/Blood_printR"
+	"$decal" 1
+	"$decalscale" 0.25
+}

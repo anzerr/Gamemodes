@@ -1,0 +1,26 @@
+include( "shared.lua" )
+
+function ENT:Draw()
+	self:DrawModel()
+end
+
+ENT.LastEffect = 0
+
+function ENT:Think ( )	
+
+	if ( self.LastEffect < CurTime() ) then
+		self.LastEffect = CurTime() + 0.5
+		if ( self.Entity:GetNWBool( "Hit" ) == true ) then
+			local effect = EffectData()
+				effect:SetOrigin( self.Entity:GetPos() )
+			util.Effect( "rebel_flare", effect )
+		end
+	end
+
+end
+
+function ENT:OnRemove()
+	local effect = EffectData()
+		effect:SetOrigin( self.Entity:GetPos() )
+	util.Effect( "rebel_flare_explosion", effect )
+end

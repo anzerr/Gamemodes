@@ -1,0 +1,6 @@
+"UnlitGeneric"
+{
+	"$basetexture" "hud/hudgrid"
+	"$vertexalpha" 1
+	"$vertexcolor" 1
+}

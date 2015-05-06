@@ -1,0 +1,6 @@
+"VertexLitGeneric"
+{
+	"$basetexture" "effect/Bee"
+	"$vertexalpha" 1
+	"$vertexcolor" 1
+}

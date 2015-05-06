@@ -1,0 +1,154 @@
+
+AddCSLuaFile( "cl_init.lua" )
+AddCSLuaFile( "shared.lua" )
+
+include('shared.lua')
+
+local Distance 		= 125
+local MaxFires 		= 20
+local NumberOfFires	= 0
+
+function ENT:Initialize()
+	self.Entity:SetModel("models/props_junk/wood_pallet001a.mdl")
+
+	self.Entity:SetMoveType( MOVETYPE_NONE )
+	self.Entity:SetSolid( SOLID_NONE )
+	self.Entity:SetAngles( Angle(0, 0, 0) )
+	self.Entity:SetPos( self:GetPos() + Vector(0, 0, 10) )
+	
+	self.LastSpread = CurTime()
+	self.SpawnTime = CurTime()
+	
+	NumberOfFires = NumberOfFires + 1
+	self.LastDamage = CurTime()
+	self:SetNWInt( "ExtinguisherLeft", 10 )
+	self.Spores = 0
+	self.HealthAdd = CurTime()
+	
+	self:DrawShadow(false)
+end
+
+function ENT:SpreadFire()
+	if NumberOfFires >= MaxFires then return false end
+
+	for i = 1, 25 do
+		local RandomStart = self:GetPos() + Vector(math.Rand(-1, 1) * Distance, math.Rand(-1, 1) * Distance, 50)
+		local UsStart = self:GetPos() + Vector(0, 0, 10)
+		
+		local Trace = {};
+			Trace.start = UsStart
+			Trace.endpos = RandomStart
+			Trace.filter = self.Entity
+			Trace.mask = MASK_OPAQUE
+		local TR1 = util.TraceLine(Trace)
+
+		local Trace2 = {}
+			Trace2.start = RandomStart
+			Trace2.endpos = UsStart
+			Trace2.filter = self.Entity
+			Trace2.mask = MASK_OPAQUE
+		local TR2 = util.TraceLine(Trace2);
+		
+		if ( TR1.Hit and TR2.Hit ) or ( !TR1.Hit and !TR2.Hit ) then
+			local TrStart = RandomStart
+			local TrEnd = TrStart - Vector(0, 0, 100)
+			
+			local Trace = {}
+				Trace.start = TrStart
+				Trace.endpos = TrEnd
+				Trace.filter = self.Entity
+			local TraceResults = util.TraceLine(Trace)
+				
+			if TraceResults.HitWorld then
+				if util.IsInWorld(TraceResults.HitPos) then				
+					if 	TraceResults.MatType == MAT_DIRT or 
+						TraceResults.MatType == MAT_WOOD or
+						TraceResults.MatType == MAT_COMPUTER or
+						TraceResults.MatType == MAT_FOLIAGE or
+						TraceResults.MatType == MAT_PLASTIC or
+						TraceResults.MatType == MAT_SAND or
+						TraceResults.MatType == MAT_SLOSH or
+						TraceResults.MatType == MAT_TILE or
+						TraceResults.MatType == MAT_VENT then
+	
+					local NearFire = false
+						for k, v in pairs( ents.FindInSphere(TraceResults.HitPos, Distance * 0.5) ) do
+							if v:GetClass() == "rebel_fire" then
+								NearFire = true
+							end
+						end
+								
+						if !NearFire then
+							local Fire = ents.Create( "rebel_fire" )
+								Fire:SetPos(TraceResults.HitPos)
+								Fire:Spawn()
+							self.Spores = self.Spores + 1
+							return
+						end
+					end
+				end
+			end
+		end
+	end
+end
+
+function ENT:HitByExtinguisher( ply )
+
+	self:SetNWInt( "ExtinguisherLeft", self:GetNWInt( "ExtinguisherLeft" ) - 2 )
+
+	if self.ExtinguisherLeft <= 0 then
+		NumberOfFires = NumberOfFires - 1
+		
+		if ply and ply:IsValid() and ply:IsPlayer() then
+			local Cost = math.random( 10, 20 )
+			ply:AddXp( 5 )
+			ply:AddMoney( Cost ) 
+		end
+		
+		self:Remove()
+	end
+end
+
+function ENT:Think( )
+
+	local Trace = {}
+		Trace.start = self:GetPos()
+		Trace.endpos = self:GetPos() + Vector(0, 0, 500)
+		Trace.mask = MASK_VISIBLE
+		Trace.filter = self
+	local TR = util.TraceLine(Trace)
+	
+	local IsOutdoors = TR.HitPos == Trace.endpos
+		
+		if self.HealthAdd + 10 < CurTime() then 
+			self.HealthAdd = CurTime() 
+			self:SetNWInt( "ExtinguisherLeft", math.min( self:GetNWInt( "ExtinguisherLeft" ) + 1, 100 ) )
+		end
+
+		if ( self.LastSpread + 10 < CurTime() ) or ( self.LastSpread + 30 < CurTime() ) then
+			self.Spores = self.Spores + 1
+			self:SpreadFire()
+			self.LastSpread = CurTime()
+		end
+	
+	if self.LastDamage + 0.1 < CurTime() then
+		self.LastDamage = CurTime()
+		local size = self:GetNWInt( "ExtinguisherLeft" )
+
+		for k , v in pairs( ents.FindInSphere( self:GetPos(), size ) ) do
+			if v:IsPlayer() and v:Alive() and v:GetPos():Distance(self:GetPos()) <= 90 then
+			
+				if v:Team() != TEAM_FIREMAN then
+					v:Ignite(1, 0)
+					v:TakeDamage(4, v, v)
+				else
+					v:TakeDamage(1, v, v)
+				end
+			end
+		end
+	end
+end
+
+function ENT:Use( activator, caller )
+
+end

@@ -1,0 +1,99 @@
+AddCSLuaFile( "cl_init.lua" )
+AddCSLuaFile( "shared.lua" )
+
+include( 'shared.lua' )
+
+function ENT:Initialize()
+	self.Entity:SetModel( "models/Items/AR2_Grenade.mdl" )
+
+	self.Entity:PhysicsInit( SOLID_BBOX )
+	self.Entity:SetMoveType( MOVETYPE_FLY )	
+	self.Entity:SetSolid( SOLID_BBOX )
+
+	self.Position = self.Entity:GetPos()
+	self.Owner = self.Owner or self.Entity
+
+	self.NextUpdate = CurTime() + 1
+	self.LastWobble = self.Entity:GetForward()
+	timer.Simple( 10, function() if self:IsValid() then self:Remove() end end )
+end
+
+function ENT:UpdateTargets( )
+	local curtarg = nil
+	local curdist = 2800
+
+	for _,ent in pairs( ents.FindInSphere(self.Position,UpdateRadius) ) do
+		if ent:IsValid() and (ent:IsNPC() or ent:IsPlayer()) and ent ~= self.Entity and ent ~= self.Child then
+			local dist = (ent:LocalToWorld( ent:OBBCenter() ) - self.Position):Length()
+			if ( dist < curdist or curtarg == self.Owner) and self:Trace( ent, ent:LocalToWorld(ent:OBBCenter()) )  then
+				curtarg = ent
+				curdist = dist
+			end
+		end
+	end
+end
+
+function ENT:Trace( ent, entpos )
+	local trace = {}
+		trace.start = self.Position
+		trace.endpos = entpos
+	local traceRes = util.TraceLine(trace)
+
+	return (traceRes.Entity == ent)
+end
+
+function ENT:Touch( touch )
+	if ( touch == self.Owner ) then return end
+		self.Entity:SetMoveType( MOVETYPE_NONE )	
+	if ( self.Entity:WaterLevel() >= 3 ) then return end
+		local TrStart = self:GetPos()
+			local TrEnd = TrStart - Vector( 0, 0, 100 )
+	if touch:IsValid() then self.Entity:SetParent(touch) end
+		self.Entity:SetNWBool( "Hit", true )
+		
+		local Trace = {}
+			Trace.start = TrStart
+			Trace.endpos = TrEnd
+			Trace.filter = self.Entity
+		local TraceResults = util.TraceLine( Trace )
+				
+	if TraceResults.HitWorld then
+		if util.IsInWorld( TraceResults.HitPos ) then				
+			if ( TraceResults.MatType == MAT_DIRT or TraceResults.MatType == MAT_WOOD or TraceResults.MatType == MAT_FOLIAGE or TraceResults.MatType == MAT_PLASTIC or TraceResults.MatType == MAT_TILE ) then
+				local NearFire = false
+					for k, v in pairs( ents.FindInSphere( TraceResults.HitPos, 100) ) do
+						if v:GetClass() == "rebel_fire" then
+							NearFire = true
+						end
+					end
+						
+				if !NearFire then
+					local Fire = ents.Create( "rebel_fire" )
+						Fire:SetPos(TraceResults.HitPos)
+						Fire:Spawn()
+					return
+				end
+			end
+		end
+	end
+end
+
+function ENT:Think()
+	if self.NextUpdate < CurTime() then
+		self:UpdateTargets()
+		self.NextUpdate = CurTime() + 0.2
+	end
+	
+	self.Position = self.Entity:GetPos()
+	
+	local Wobble = (VectorRand() + self.LastWobble):GetNormalized()
+	local RocketAng = self.Entity:GetForward()
+	local NewAng = Wobble*0.03 + RocketAng
+
+	NewAng = NewAng:GetNormalized()
+
+	self.Entity:SetAngles( NewAng:Angle() )
+	self.Entity:SetLocalVelocity( NewAng*2000 )
+
+	self.LastWobble = Wobble
+end

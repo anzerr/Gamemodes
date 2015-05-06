@@ -1,0 +1,15 @@
+"VertexLitGeneric"
+{
+	"$baseTexture" "models\\gtaiv\weapons/rpg"
+	"$bumpmap" "models\\gtaiv\weapons/rpg_n"
+	"$phong" "1"
+	"$phongexponent" "4"
+	"$phongboost" ".3"	
+	"$phongfresnelranges"	"[.2 0.5 4]"
+	"$halflambert" "1"
+
+	// Rim lighting parameters
+	"$rimlight" "1"												// To enable rim lighting (requires phong)
+	"$rimlightexponent" "4"										// Exponent for phong component of rim lighting	
+	"$rimlightboost" "1"
+}

@@ -1,0 +1,6 @@
+"UnlitGeneric"
+{
+	"$basetexture" "hud/circle_rim"
+	"$vertexalpha" 1
+	"$vertexcolor" 1
+}

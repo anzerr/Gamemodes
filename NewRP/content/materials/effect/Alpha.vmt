@@ -1,0 +1,5 @@
+"VertexLitGeneric"
+{
+	"$basetexture" "effect/Alpha"
+	"$translucent" 1
+}

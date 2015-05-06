@@ -1,0 +1,6 @@
+"VertexLitGeneric"
+{
+	"$baseTexture" "mine\dirt/DirtBUMP"
+	"$model" "1"
+	"$normal" "1"
+}
